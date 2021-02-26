@@ -49,7 +49,7 @@ class _TransactionFormState extends State<TransactionForm> {
                       _onSubmitted();
                     },
                     child: Text('Nova Transação'),
-                    textColor: Colors.purple),
+                    textColor: Theme.of(context).primaryColor),
               ],
             )
           ],
