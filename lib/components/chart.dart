@@ -30,28 +30,22 @@ class Chart extends StatelessWidget {
           }
         }
 
-        return {
-          'day': DateFormat.E().format(weekDay)[0],
-          'value': totalSum,
-        };
+        return {'day': DateFormat.E().format(weekDay)[0], 'value': totalSum};
       },
-    );
+    ).reversed.toList();
   }
 
   double get _weekTotalValue {
-    return groupedTransactions.fold(
-      0.0,
-      (sum, tr) => sum + tr['value'],
-    );
+    return groupedTransactions.fold(0.0, (sum, tr) => sum + tr['value']);
   }
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 6,
-      margin: EdgeInsets.all(20),
+      margin: EdgeInsets.all(10),
       child: Padding(
-        padding: const EdgeInsets.all(10.0),
+        padding: const EdgeInsets.all(5.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: groupedTransactions
@@ -61,7 +55,9 @@ class Chart extends StatelessWidget {
                   child: ChartBar(
                     label: e['day'],
                     value: e['value'],
-                    percentage: (e['value'] as double) / _weekTotalValue,
+                    percentage: recentTransaction.isEmpty
+                        ? 0.0
+                        : (e['value'] as double) / _weekTotalValue,
                   ),
                 ),
               )

@@ -13,9 +13,14 @@ class ExpensesApp extends StatelessWidget {
     return MaterialApp(
       home: MyHomePage(),
       theme: ThemeData(
-        primarySwatch: Colors.amber,
-        fontFamily: 'Newsreader',
-      ),
+          primarySwatch: Colors.amber,
+          fontFamily: 'Newsreader',
+          textTheme: ThemeData.light().textTheme.copyWith(
+                button: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              )),
     );
   }
 }
@@ -27,26 +32,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final List<Transaction> _transactions = [];
-  /*[
-    Transaction(
-      id: 't2',
-      title: 'Conta de luz',
-      value: 25.10,
-      date: DateTime.now().subtract(Duration(days: 33)),
-    ),
-    Transaction(
-      id: 't3',
-      title: 'Conta de água',
-      value: 50.30,
-      date: DateTime.now().subtract(Duration(days: 4)),
-    ),
-    Transaction(
-      id: 't4',
-      title: 'Conta de gás',
-      value: 211.30,
-      date: DateTime.now().subtract(Duration(days: 5)),
-    ),
-  ];*/
+
+  bool _showChart = true;
 
   List<Transaction> get _recentTransactions {
     return _transactions.where((element) {
@@ -58,18 +45,25 @@ class _MyHomePageState extends State<MyHomePage> {
     }).toList();
   }
 
-  void _addTransaction(String title, double value) {
+  void _addTransaction(String title, double value, DateTime dt) {
     Transaction newTransaction = Transaction(
-        id: Random().nextDouble().toString(),
-        title: title,
-        value: value,
-        date: DateTime.now());
+      id: Random().nextDouble().toString(),
+      title: title,
+      value: value,
+      date: dt,
+    );
 
     setState(() {
       _transactions.add(newTransaction);
     });
 
     Navigator.of(context).pop();
+  }
+
+  void _removeTransactions(tr) {
+    setState(() {
+      _transactions.remove(tr);
+    });
   }
 
   _openTransactionFormModal(BuildContext context) {
@@ -83,57 +77,64 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Despesas Pessoais',
-        ),
-        actions: [
-          IconButton(
-              icon: Icon(Icons.add),
-              onPressed: () => _openTransactionFormModal(context))
-        ],
+    final mediaQuery = MediaQuery.of(context);
+    bool isLandscape = mediaQuery.orientation == Orientation.landscape;
+
+    final appBar = AppBar(
+      title: Text(
+        'Despesas Pessoais',
       ),
-      body: _transactions.isEmpty
-          ? Container(
-              alignment: Alignment.center,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    height: 20,
-                  ),
-                  Text(
-                    'Nenhuma Transação Cadastrada',
-                    style: Theme.of(context).textTheme.headline6,
-                  ),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  Container(
-                    height: 200,
-                    child: Image.asset(
-                      'assets/images/waiting.png',
-                      fit: BoxFit.cover,
-                    ),
-                  )
-                ],
+      actions: [
+        if (isLandscape)
+          IconButton(
+            icon: _showChart ? Icon(Icons.list) : Icon(Icons.pie_chart),
+            onPressed: () {
+              setState(() {
+                _showChart = !_showChart;
+              });
+            },
+          ),
+        IconButton(
+          icon: Icon(Icons.add),
+          onPressed: () => _openTransactionFormModal(context),
+        ),
+      ],
+    );
+
+    final availableHeight = mediaQuery.size.height -
+        appBar.preferredSize.height -
+        MediaQuery.of(context).padding.top;
+
+    return Scaffold(
+      appBar: appBar,
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            if (_showChart || !isLandscape)
+              Container(
+                height:
+                    isLandscape ? availableHeight * 0.8 : availableHeight * 0.3,
+                child: Chart(_recentTransactions),
               ),
-            )
-          : SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Chart(_recentTransactions),
-                  TransactionList(_transactions),
-                ],
+            if (!_showChart || !isLandscape)
+              Container(
+                height:
+                    isLandscape ? availableHeight * 1 : availableHeight * 0.7,
+                child: TransactionList(
+                  _transactions,
+                  _removeTransactions,
+                  (availableHeight * 0.7),
+                ),
               ),
-            ),
+          ],
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: () => _openTransactionFormModal(context),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }
